@@ -7,286 +7,275 @@
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;800&display=swap');
-
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
       --bg: #0a0a0f;
       --surface: #12121a;
-      --border: rgba(255,255,255,0.07);
+      --border: rgba(255,255,255,0.08);
       --accent: #7cffc4;
       --accent-dim: rgba(124,255,196,0.12);
-      --accent-glow: rgba(124,255,196,0.25);
+      --accent-glow: rgba(124,255,196,0.3);
       --text: #e8e8f0;
-      --muted: rgba(232,232,240,0.4);
+      --muted: rgba(232,232,240,0.45);
       --danger: #ff6b8a;
       --danger-dim: rgba(255,107,138,0.12);
     }
-
     html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; overflow: hidden; }
 
-    .screen { display: none; height: 100vh; }
+    /* ── SCREENS ── */
+    .screen { display: none; height: 100vh; position: relative; }
     .screen.active { display: flex; }
+    .centered { flex-direction: column; align-items: center; justify-content: center; }
 
-    /* shared grid background */
-    .grid-bg {
-      flex-direction: column; align-items: center; justify-content: center; position: relative;
-    }
+    /* grid bg */
     .grid-bg::before {
-      content: ''; position: absolute; inset: 0;
+      content: ''; position: absolute; inset: 0; pointer-events: none;
       background-image: linear-gradient(rgba(124,255,196,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(124,255,196,0.04) 1px,transparent 1px);
-      background-size: 48px 48px; pointer-events: none;
+      background-size: 48px 48px;
     }
     .grid-bg::after {
-      content: ''; position: absolute; inset: 0;
+      content: ''; position: absolute; inset: 0; pointer-events: none;
       background: radial-gradient(ellipse 70% 60% at 50% 50%,transparent 30%,var(--bg) 100%);
-      pointer-events: none;
     }
 
     /* ── LOGO ── */
-    .logo {
-      position: relative; z-index: 1;
-      display: flex; align-items: center; gap: 12px; margin-bottom: 44px;
-    }
-    .logo-icon {
-      width: 40px; height: 40px; border: 1.5px solid var(--accent); border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-    }
+    .logo { position: relative; z-index: 1; display: flex; align-items: center; gap: 12px; margin-bottom: 40px; }
+    .logo-icon { width: 38px; height: 38px; border: 1.5px solid var(--accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; }
     .logo-icon svg { color: var(--accent); }
-    .logo-text { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+    .logo-text { font-size: 21px; font-weight: 800; letter-spacing: -0.5px; }
     .logo-text span { color: var(--accent); }
 
     /* ── CARD ── */
     .card {
       position: relative; z-index: 1;
       background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
-      padding: 36px 44px; width: 440px; max-width: calc(100vw - 40px);
-      display: flex; flex-direction: column; align-items: center; gap: 22px;
+      padding: 34px 40px; width: 430px; max-width: calc(100vw - 32px);
+      display: flex; flex-direction: column; align-items: center; gap: 20px;
     }
-    .card-title { font-size: 26px; font-weight: 800; letter-spacing: -0.8px; text-align: center; line-height: 1.2; }
+    .card-title { font-size: 24px; font-weight: 800; letter-spacing: -0.7px; text-align: center; }
     .card-sub { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); text-align: center; line-height: 1.6; margin-top: -8px; }
 
-    /* ── MODE BUTTONS ── */
+    /* ── MODE ROW ── */
     .mode-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
     .mode-btn {
-      display: flex; flex-direction: column; align-items: center; gap: 10px;
-      padding: 20px 12px; background: var(--surface); border: 1px solid var(--border);
-      border-radius: 14px; color: var(--text); cursor: pointer; font-family: 'Syne', sans-serif;
+      display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 18px 10px;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+      color: var(--text); cursor: pointer; font-family: 'Syne', sans-serif;
       transition: border-color 0.2s, background 0.2s;
     }
     .mode-btn:hover { border-color: rgba(124,255,196,0.4); background: var(--accent-dim); }
     .mode-btn svg { color: var(--accent); }
     .mode-btn strong { font-size: 14px; font-weight: 700; }
-    .mode-btn small { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); text-align: center; }
+    .mode-btn small { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); text-align: center; line-height: 1.4; }
 
     /* ── OPTIONS ── */
-    .options { display: flex; flex-direction: column; gap: 10px; width: 100%; }
-    .opt {
-      display: flex; align-items: center; gap: 12px; padding: 14px 16px;
-      border-radius: 12px; border: 1px solid var(--border);
-      cursor: pointer; transition: border-color 0.2s, background 0.2s; user-select: none;
-    }
+    .options { display: flex; flex-direction: column; gap: 9px; width: 100%; }
+    .opt { display: flex; align-items: center; gap: 12px; padding: 13px 15px; border-radius: 11px; border: 1px solid var(--border); cursor: pointer; transition: border-color 0.2s, background 0.2s; user-select: none; }
     .opt:hover { background: rgba(255,255,255,0.03); }
     .opt.selected { border-color: var(--accent); background: var(--accent-dim); }
-    .opt-dot {
-      width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--muted);
-      flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: border-color 0.2s;
-    }
+    .opt-dot { width: 15px; height: 15px; border-radius: 50%; border: 1.5px solid var(--muted); flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: border-color 0.2s; }
     .opt.selected .opt-dot { border-color: var(--accent); }
-    .opt-dot::after { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); opacity: 0; transition: opacity 0.2s; }
+    .opt-dot::after { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); opacity: 0; transition: opacity 0.2s; }
     .opt.selected .opt-dot::after { opacity: 1; }
     .opt-label { font-size: 14px; font-weight: 600; }
     .opt-hint { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); margin-top: 1px; }
 
     /* ── BUTTONS ── */
     .btn-primary {
-      width: 100%; padding: 15px; border-radius: 12px; border: none;
-      background: var(--accent); color: #0a0a0f;
-      font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 800;
-      cursor: pointer; transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+      width: 100%; padding: 14px; border-radius: 12px; border: none;
+      background: var(--accent); color: #0a0a0f; font-family: 'Syne', sans-serif;
+      font-size: 15px; font-weight: 800; cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
     }
-    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 8px 32px var(--accent-glow); }
+    .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 8px 28px var(--accent-glow); }
     .btn-primary:active { transform: translateY(0); }
-    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; transform: none; box-shadow: none; }
     .btn-ghost {
       background: none; border: 1px solid var(--border); border-radius: 10px;
       color: var(--muted); font-family: 'DM Mono', monospace; font-size: 12px;
       padding: 10px 16px; cursor: pointer; width: 100%; transition: border-color 0.2s, color 0.2s;
     }
-    .btn-ghost:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
-
-    .fs-hint { font-family: 'DM Mono', monospace; font-size: 11px; color: rgba(232,232,240,0.2); letter-spacing: 0.4px; }
-
-    /* ── LINK BOX ── */
-    .link-box {
-      width: 100%; background: rgba(124,255,196,0.06);
-      border: 1px solid rgba(124,255,196,0.25); border-radius: 12px;
-      padding: 12px 14px; display: flex; align-items: center; gap: 10px;
-    }
-    .link-url { flex: 1; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--accent); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .copy-btn {
-      background: none; border: 1px solid rgba(124,255,196,0.3); border-radius: 8px;
-      color: var(--accent); font-family: 'DM Mono', monospace; font-size: 11px;
-      padding: 6px 10px; cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: background 0.2s;
-    }
-    .copy-btn:hover { background: var(--accent-dim); }
-
-    .waiting-row {
-      display: flex; align-items: center; gap: 8px;
-      font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted);
-      flex-wrap: wrap;
-    }
-    .viewer-pill {
-      font-family: 'DM Mono', monospace; font-size: 11px; color: var(--accent);
-      background: var(--accent-dim); border: 1px solid rgba(124,255,196,0.2);
-      border-radius: 20px; padding: 3px 10px; margin-left: auto;
-    }
+    .btn-ghost:hover { border-color: rgba(255,255,255,0.18); color: var(--text); }
 
     /* ── JOIN INPUT ── */
     .join-input {
       width: 100%; padding: 14px 16px;
       background: rgba(255,255,255,0.04); border: 1px solid var(--border);
       border-radius: 12px; color: var(--text);
-      font-family: 'DM Mono', monospace; font-size: 16px; letter-spacing: 3px;
-      text-align: center; text-transform: uppercase;
-      outline: none; transition: border-color 0.2s;
+      font-family: 'DM Mono', monospace; font-size: 14px;
+      text-align: center; outline: none; transition: border-color 0.2s;
     }
     .join-input:focus { border-color: var(--accent); }
-    .join-input::placeholder { color: rgba(232,232,240,0.2); letter-spacing: 1px; text-transform: none; font-size: 13px; }
+    .join-input::placeholder { color: rgba(232,232,240,0.2); font-size: 12px; }
 
-    /* ── LIVE VIEW ── */
-    #liveView { flex-direction: column; background: #000; position: relative; }
-    #videoEl { flex: 1; width: 100%; object-fit: contain; background: #000; display: block; }
+    /* ════════════════════════════════════════
+       LIVE VIEW
+       ════════════════════════════════════════ */
+    #liveView { background: #000; flex-direction: column; }
 
+    /* video fills the whole screen */
+    #videoEl { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; display: block; }
+
+    /* ── SHARE LINK OVERLAY — shown right after sharing starts ── */
+    #linkOverlay {
+      position: absolute; inset: 0; z-index: 30;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(10,10,15,0.82); backdrop-filter: blur(6px);
+    }
+    #linkOverlay.gone { display: none; }
+
+    .link-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 20px;
+      padding: 32px 36px; width: 420px; max-width: calc(100vw - 32px);
+      display: flex; flex-direction: column; gap: 18px; align-items: center;
+    }
+    .link-card-title { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+    .link-card-sub { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); text-align: center; line-height: 1.6; margin-top: -10px; }
+
+    .link-row {
+      width: 100%; display: flex; align-items: center; gap: 8px;
+      background: rgba(124,255,196,0.06); border: 1px solid rgba(124,255,196,0.22);
+      border-radius: 12px; padding: 12px 14px;
+    }
+    .link-text { flex: 1; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--accent); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .copy-btn {
+      flex-shrink: 0; background: none; border: 1px solid rgba(124,255,196,0.3); border-radius: 8px;
+      color: var(--accent); font-family: 'DM Mono', monospace; font-size: 11px;
+      padding: 6px 10px; cursor: pointer; transition: background 0.2s; white-space: nowrap;
+    }
+    .copy-btn:hover { background: var(--accent-dim); }
+    .copy-btn.copied { background: var(--accent-dim); border-color: var(--accent); }
+
+    .dismiss-btn {
+      width: 100%; padding: 13px; border-radius: 12px; border: none;
+      background: var(--accent); color: #0a0a0f; font-family: 'Syne', sans-serif;
+      font-size: 14px; font-weight: 800; cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+    .dismiss-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+    .watching-note { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); text-align: center; }
+
+    /* ── CONTROLS BAR ── */
     #controls {
-      position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%);
+      position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
       display: flex; align-items: center; gap: 10px;
       background: rgba(10,10,15,0.85); backdrop-filter: blur(16px);
       border: 1px solid var(--border); border-radius: 60px;
-      padding: 10px 16px; transition: opacity 0.4s; z-index: 10;
+      padding: 10px 16px; transition: opacity 0.4s; z-index: 20;
     }
     #controls.hidden { opacity: 0; pointer-events: none; }
 
     .ctrl-btn {
       background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 50%; width: 42px; height: 42px;
-      color: var(--text); cursor: pointer;
+      border-radius: 50%; width: 40px; height: 40px; color: var(--text); cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       transition: background 0.2s, border-color 0.2s, color 0.2s; flex-shrink: 0;
     }
     .ctrl-btn:hover { background: rgba(255,255,255,0.12); }
     .ctrl-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
-    .ctrl-btn.stop-btn {
-      width: auto; border-radius: 60px; padding: 0 18px;
-      font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; gap: 8px;
-      background: var(--danger-dim); border-color: var(--danger); color: var(--danger);
+    .stop-btn {
+      width: auto !important; border-radius: 60px !important; padding: 0 16px;
+      font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; gap: 7px;
+      background: var(--danger-dim) !important; border-color: var(--danger) !important; color: var(--danger) !important;
     }
-    .ctrl-btn.stop-btn:hover { background: rgba(255,107,138,0.25); }
+    .stop-btn:hover { background: rgba(255,107,138,0.22) !important; }
 
-    .ctrl-divider { width: 1px; height: 28px; background: var(--border); margin: 0 4px; }
-    .ctrl-label { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); padding: 0 8px; white-space: nowrap; }
+    .ctrl-divider { width: 1px; height: 26px; background: var(--border); margin: 0 3px; }
+    .ctrl-label { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); padding: 0 6px; white-space: nowrap; }
 
+    /* ── STATUS / VIEWER BADGES ── */
     #statusBadge {
-      position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+      position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
       display: flex; align-items: center; gap: 8px;
       background: rgba(10,10,15,0.75); backdrop-filter: blur(12px);
       border: 1px solid var(--border); border-radius: 60px;
-      padding: 8px 16px; font-family: 'DM Mono', monospace; font-size: 12px;
-      color: var(--muted); z-index: 10; transition: opacity 0.4s;
+      padding: 7px 14px; font-family: 'DM Mono', monospace; font-size: 11px;
+      color: var(--muted); z-index: 20; transition: opacity 0.4s;
     }
     #statusBadge.hidden { opacity: 0; }
 
     #viewerBadge {
-      position: absolute; top: 20px; right: 20px;
+      position: absolute; top: 18px; right: 16px;
       display: flex; align-items: center; gap: 6px;
       background: rgba(10,10,15,0.75); backdrop-filter: blur(12px);
       border: 1px solid var(--border); border-radius: 60px;
-      padding: 8px 14px; font-family: 'DM Mono', monospace; font-size: 12px;
-      color: var(--muted); z-index: 10;
+      padding: 7px 13px; font-family: 'DM Mono', monospace; font-size: 11px;
+      color: var(--muted); z-index: 20;
     }
     #viewerBadge svg { color: var(--accent); }
 
-    .pulse-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: pulse 1.8s ease-in-out infinite; }
+    /* re-show link button */
+    #showLinkBtn {
+      position: absolute; top: 18px; left: 16px; z-index: 20;
+      background: rgba(10,10,15,0.75); backdrop-filter: blur(12px);
+      border: 1px solid rgba(124,255,196,0.25); border-radius: 60px;
+      padding: 7px 14px; font-family: 'DM Mono', monospace; font-size: 11px;
+      color: var(--accent); cursor: pointer; transition: background 0.2s;
+    }
+    #showLinkBtn:hover { background: var(--accent-dim); }
+
+    .pulse-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); animation: pulse 1.8s ease-in-out infinite; }
     @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.7)} }
 
     /* connecting overlay */
     #connectingOverlay {
-      position: absolute; inset: 0;
-      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
-      background: #000; z-index: 20;
+      position: absolute; inset: 0; z-index: 25;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+      background: #000;
     }
     #connectingOverlay.gone { display: none; }
-    .spinner { width: 36px; height: 36px; border-radius: 50%; border: 2px solid rgba(124,255,196,0.15); border-top-color: var(--accent); animation: spin 0.8s linear infinite; }
+    .spinner { width: 34px; height: 34px; border-radius: 50%; border: 2px solid rgba(124,255,196,0.12); border-top-color: var(--accent); animation: spin 0.8s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .connecting-text { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--muted); }
 
     /* toast */
     #toast {
-      position: fixed; bottom: 90px; left: 50%;
-      transform: translateX(-50%) translateY(10px);
-      background: rgba(10,10,15,0.9); backdrop-filter: blur(12px);
+      position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(8px);
+      background: rgba(10,10,15,0.92); backdrop-filter: blur(12px);
       border: 1px solid var(--border); border-radius: 10px;
-      padding: 10px 18px; font-family: 'DM Mono', monospace; font-size: 13px;
+      padding: 9px 16px; font-family: 'DM Mono', monospace; font-size: 13px;
       color: var(--text); opacity: 0; pointer-events: none;
-      transition: opacity 0.3s, transform 0.3s; z-index: 200; white-space: nowrap;
+      transition: opacity 0.25s, transform 0.25s; z-index: 200; white-space: nowrap;
     }
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    .fs-hint { font-family: 'DM Mono', monospace; font-size: 11px; color: rgba(232,232,240,0.18); letter-spacing: 0.3px; }
   </style>
 </head>
 <body>
 
-<!-- ══════════════════════ HOME ══════════════════════ -->
-<div id="idle" class="screen active grid-bg">
+<!-- ═══════════ HOME ═══════════ -->
+<div id="idle" class="screen active centered grid-bg">
   <div class="logo">
-    <div class="logo-icon">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
-      </svg>
-    </div>
+    <div class="logo-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
     <div class="logo-text">Screen<span>Share</span></div>
   </div>
   <div class="card">
-    <div>
-      <div class="card-title">What do you want to do?</div>
-      <div class="card-sub">Peer-to-peer · no accounts · no server</div>
-    </div>
+    <div><div class="card-title">What do you want to do?</div><div class="card-sub">Peer-to-peer · no accounts · no server</div></div>
     <div class="mode-row">
       <button class="mode-btn" onclick="go('shareSetup')">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
-          <path d="M12 3v5M9.5 5.5l2.5-2.5 2.5 2.5"/>
-        </svg>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4M12 3v5M9.5 5.5l2.5-2.5 2.5 2.5"/></svg>
         <strong>Share my screen</strong>
-        <small>Get a link to send<br>to viewers</small>
+        <small>Get a code to send<br>to viewers</small>
       </button>
       <button class="mode-btn" onclick="go('joinSetup')">
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
-          <path d="M12 12v5M9.5 14.5l2.5 2.5 2.5-2.5"/>
-        </svg>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4M12 12v5M9.5 14.5l2.5 2.5 2.5-2.5"/></svg>
         <strong>Watch a screen</strong>
-        <small>Enter a room code<br>to join</small>
+        <small>Enter a code<br>to join</small>
       </button>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════ SHARE SETUP ══════════════════════ -->
-<div id="shareSetup" class="screen grid-bg">
+<!-- ═══════════ SHARE SETUP ═══════════ -->
+<div id="shareSetup" class="screen centered grid-bg">
   <div class="logo">
-    <div class="logo-icon">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
-      </svg>
-    </div>
+    <div class="logo-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
     <div class="logo-text">Screen<span>Share</span></div>
   </div>
   <div class="card">
-    <div>
-      <div class="card-title">Share your screen</div>
-      <div class="card-sub">Choose what to share, then send the link</div>
-    </div>
-
+    <div><div class="card-title">Share your screen</div><div class="card-sub">Choose what to share — you'll get a code to send</div></div>
     <div class="options">
       <div class="opt selected" data-value="screen" onclick="selectOpt(this)">
         <div class="opt-dot"></div>
@@ -301,99 +290,101 @@
         <div><div class="opt-label">Browser tab</div><div class="opt-hint">Share just this tab</div></div>
       </div>
     </div>
-
-    <!-- shown once live -->
-    <div id="linkSection" style="display:none;width:100%;flex-direction:column;gap:10px;">
-      <div class="waiting-row">
-        <div class="pulse-dot"></div>
-        <span>Live — share this link</span>
-        <span id="liveViewerPill" class="viewer-pill">0 watching</span>
-      </div>
-      <div class="link-box">
-        <span class="link-url" id="shareLink">—</span>
-        <button class="copy-btn" onclick="copyLink()">Copy</button>
-      </div>
-    </div>
-
-    <button class="btn-primary" id="startBtn" onclick="startSharing()">Start Sharing</button>
+    <button class="btn-primary" id="startBtn" onclick="startSharing()">Start Sharing →</button>
     <button class="btn-ghost" onclick="go('idle')">← Back</button>
-    <div class="fs-hint">F = fullscreen · Space = pause · M = mute</div>
   </div>
 </div>
 
-<!-- ══════════════════════ JOIN SETUP ══════════════════════ -->
-<div id="joinSetup" class="screen grid-bg">
+<!-- ═══════════ JOIN SETUP ═══════════ -->
+<div id="joinSetup" class="screen centered grid-bg">
   <div class="logo">
-    <div class="logo-icon">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
-      </svg>
-    </div>
+    <div class="logo-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
     <div class="logo-text">Screen<span>Share</span></div>
   </div>
   <div class="card">
-    <div>
-      <div class="card-title">Watch a screen</div>
-      <div class="card-sub">Enter the room code or open the link the sharer sent you</div>
-    </div>
-    <input class="join-input" id="roomInput" type="text" maxlength="36"
-      placeholder="Paste room code or link"
-      onkeydown="if(event.key==='Enter')joinRoom()" />
-    <button class="btn-primary" onclick="joinRoom()">Watch Now</button>
+    <div><div class="card-title">Watch a screen</div><div class="card-sub">Paste the link or room code the sharer sent you</div></div>
+    <input class="join-input" id="roomInput" type="text" placeholder="Paste link or room code here" onkeydown="if(event.key==='Enter')joinRoom()" />
+    <button class="btn-primary" onclick="joinRoom()">Watch Now →</button>
     <button class="btn-ghost" onclick="go('idle')">← Back</button>
   </div>
 </div>
 
-<!-- ══════════════════════ LIVE VIEW ══════════════════════ -->
+<!-- ═══════════ LIVE VIEW ═══════════ -->
 <div id="liveView" class="screen">
+
+  <!-- video behind everything -->
+  <video id="videoEl" autoplay playsinline muted></video>
+
+  <!-- ★ LINK OVERLAY — shown immediately after sharing starts ★ -->
+  <div id="linkOverlay">
+    <div class="link-card">
+      <div>
+        <div class="link-card-title">🎉 You're live!</div>
+        <div class="link-card-sub">Send this link to anyone you want to watch your screen.<br>They just open it — no account needed.</div>
+      </div>
+
+      <div id="codeBox" style="width:100%;display:flex;flex-direction:column;gap:10px;">
+        <!-- big room code -->
+        <div style="text-align:center;">
+          <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-bottom:6px;letter-spacing:0.5px;">ROOM CODE</div>
+          <div id="roomCodeDisplay" style="font-family:'DM Mono',monospace;font-size:28px;font-weight:500;color:var(--accent);letter-spacing:6px;">——————</div>
+        </div>
+        <!-- full link -->
+        <div class="link-row">
+          <span class="link-text" id="shareLink">—</span>
+          <button class="copy-btn" id="copyBtn" onclick="copyLink()">Copy link</button>
+        </div>
+      </div>
+
+      <div class="watching-note" id="viewerNote">Waiting for viewers to join…</div>
+
+      <button class="dismiss-btn" onclick="dismissOverlay()">Got it — show my screen →</button>
+    </div>
+  </div>
+
+  <!-- re-show link button (top left, always visible) -->
+  <button id="showLinkBtn" onclick="document.getElementById('linkOverlay').classList.remove('gone')" style="display:none;">
+    🔗 Share link
+  </button>
+
+  <!-- status badge -->
   <div id="statusBadge">
     <div class="pulse-dot"></div>
     <span id="statusText">Sharing</span>
   </div>
 
-  <div id="viewerBadge">
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-    </svg>
+  <!-- viewer count badge (sharer only) -->
+  <div id="viewerBadge" style="display:none;">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
     <span id="viewerCountLive">0</span>
   </div>
 
+  <!-- connecting overlay (viewer) -->
   <div id="connectingOverlay" class="gone">
     <div class="spinner"></div>
-    <div class="connecting-text" id="connectingText">Connecting…</div>
+    <div class="connecting-text" id="connectingText">Connecting to sharer…</div>
   </div>
 
-  <video id="videoEl" autoplay playsinline muted></video>
-
-  <div id="controls">
+  <!-- controls bar -->
+  <div id="controls" class="hidden">
     <button class="ctrl-btn" id="muteBtn" title="Mute audio" onclick="toggleMute()">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
-        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
-      </svg>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
     </button>
     <button class="ctrl-btn" id="pauseBtn" title="Pause / Resume" onclick="togglePause()">
-      <svg id="pauseIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>
-      </svg>
+      <svg id="pauseIcon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
     </button>
     <div class="ctrl-divider"></div>
     <div class="ctrl-label" id="resLabel">— × —</div>
     <div class="ctrl-divider"></div>
     <button class="ctrl-btn" id="fsBtn" title="Fullscreen" onclick="toggleFullscreen()">
-      <svg id="fsIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>
-      </svg>
+      <svg id="fsIcon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
     </button>
     <button class="ctrl-btn" id="pipBtn" title="Picture-in-Picture" onclick="togglePip()">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="2" y="3" width="20" height="14" rx="2"/><rect x="12" y="11" width="9" height="6" rx="1"/>
-      </svg>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><rect x="12" y="11" width="9" height="6" rx="1"/></svg>
     </button>
     <div class="ctrl-divider"></div>
     <button class="ctrl-btn stop-btn" onclick="hangUp()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
       Stop
     </button>
   </div>
@@ -402,30 +393,20 @@
 <div id="toast"></div>
 
 <script>
-// ────────────────────────────────────────────
-//  STATE
-// ────────────────────────────────────────────
-let peer = null;
-let localStream = null;
-let mediaConns = [];      // sharer: open MediaConnections to viewers
-let viewerConn = null;    // viewer: the MediaConnection
-let role = null;          // 'sharer' | 'viewer'
-let muted = false, paused = false;
-let hideTimer = null;
-let viewerCount = 0;
+let peer = null, localStream = null;
+let mediaConns = [], viewerConn = null;
+let role = null, muted = false, paused = false;
+let hideTimer = null, viewerCount = 0;
 
-// ────────────────────────────────────────────
-//  NAVIGATION
-// ────────────────────────────────────────────
+// ── Navigation ──
 function go(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
 
-// On load: if ?room= in URL, jump straight to join
 window.addEventListener('load', () => {
-  const params = new URLSearchParams(location.search);
-  const room = params.get('room');
+  const p = new URLSearchParams(location.search);
+  const room = p.get('room');
   if (room) {
     go('joinSetup');
     document.getElementById('roomInput').value = room;
@@ -433,235 +414,186 @@ window.addEventListener('load', () => {
   }
 });
 
-// ────────────────────────────────────────────
-//  OPTION SELECTOR
-// ────────────────────────────────────────────
+// ── Option selector ──
 function selectOpt(el) {
   document.querySelectorAll('.opt').forEach(o => o.classList.remove('selected'));
   el.classList.add('selected');
 }
-function getSelected() {
-  return document.querySelector('.opt.selected')?.dataset.value || 'screen';
-}
 
-// ────────────────────────────────────────────
-//  SHARER
-// ────────────────────────────────────────────
+// ── SHARER ──
 async function startSharing() {
   const btn = document.getElementById('startBtn');
-  btn.disabled = true;
-  btn.textContent = 'Starting…';
+  btn.disabled = true; btn.textContent = 'Starting…';
 
-  const type = getSelected();
+  const type = document.querySelector('.opt.selected')?.dataset.value || 'screen';
   try {
     localStream = await navigator.mediaDevices.getDisplayMedia({
       video: { displaySurface: type === 'browser' ? 'browser' : type === 'window' ? 'window' : 'monitor', frameRate: { ideal: 30 } },
       audio: true
     });
   } catch (err) {
-    btn.disabled = false;
-    btn.textContent = 'Start Sharing';
+    btn.disabled = false; btn.textContent = 'Start Sharing →';
     if (err.name !== 'NotAllowedError') toast('Could not capture: ' + err.message);
     return;
   }
 
   role = 'sharer';
-  peer = new Peer();   // PeerJS cloud gives us a unique ID
+  peer = new Peer();
 
   peer.on('open', (id) => {
-    // The full peer ID *is* the room code — viewers use it to call us
-    const shareUrl = `${location.origin}${location.pathname}?room=${id}`;
-    document.getElementById('shareLink').textContent = shareUrl;
-    const ls = document.getElementById('linkSection');
-    ls.style.display = 'flex';
+    const url = location.origin + location.pathname + '?room=' + id;
 
-    btn.textContent = 'Sharing…';
-    showLiveView(localStream, 'sharer');
-    toast('Share the link with your viewer!');
+    // Show the room code (first 8 chars, uppercase, for display)
+    document.getElementById('roomCodeDisplay').textContent = id.slice(0,8).toUpperCase();
+    document.getElementById('shareLink').textContent = url;
+
+    // Switch to live view — overlay is already visible
+    go('liveView');
+    document.getElementById('linkOverlay').classList.remove('gone');
+    document.getElementById('showLinkBtn').style.display = '';
+    document.getElementById('viewerBadge').style.display = '';
+    document.getElementById('muteBtn').style.display = '';
+    document.getElementById('pauseBtn').style.display = '';
+    document.getElementById('statusText').textContent = 'Sharing screen';
+
+    // Show screen behind overlay
+    const v = document.getElementById('videoEl');
+    v.srcObject = localStream; v.muted = true;
+    v.onloadedmetadata = () => { document.getElementById('resLabel').textContent = v.videoWidth + ' × ' + v.videoHeight; };
   });
 
-  // Answer every incoming call with our screen stream
   peer.on('call', (call) => {
     call.answer(localStream);
     mediaConns.push(call);
     viewerCount++;
-    updateViewerBadge();
-    toast('Viewer joined (' + viewerCount + ')');
-
-    const cleanup = () => {
-      mediaConns = mediaConns.filter(c => c !== call);
-      viewerCount = Math.max(0, viewerCount - 1);
-      updateViewerBadge();
-    };
-    call.on('close', cleanup);
-    call.on('error', cleanup);
+    updateViewers();
+    toast('Viewer connected (' + viewerCount + ')');
+    const cleanup = () => { mediaConns = mediaConns.filter(c=>c!==call); viewerCount = Math.max(0,viewerCount-1); updateViewers(); };
+    call.on('close', cleanup); call.on('error', cleanup);
   });
 
-  peer.on('error', (err) => toast('PeerJS error: ' + err.type));
-
-  // Browser's native "Stop sharing" button
+  peer.on('error', (err) => toast('Error: ' + err.type));
   localStream.getVideoTracks()[0].addEventListener('ended', hangUp);
 }
 
-function updateViewerBadge() {
+function updateViewers() {
   document.getElementById('viewerCountLive').textContent = viewerCount;
-  document.getElementById('liveViewerPill').textContent = viewerCount + ' watching';
+  const note = document.getElementById('viewerNote');
+  note.textContent = viewerCount === 0 ? 'Waiting for viewers to join…' : viewerCount + ' viewer' + (viewerCount>1?'s':'' ) + ' watching now';
+  note.style.color = viewerCount > 0 ? 'var(--accent)' : '';
 }
 
 function copyLink() {
   const url = document.getElementById('shareLink').textContent;
-  navigator.clipboard.writeText(url).then(() => toast('Link copied!')).catch(() => {
-    const ta = Object.assign(document.createElement('textarea'), { value: url });
+  const btn = document.getElementById('copyBtn');
+  navigator.clipboard.writeText(url).catch(() => {
+    const ta = Object.assign(document.createElement('textarea'),{value:url});
     document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
-    toast('Link copied!');
   });
+  btn.textContent = 'Copied ✓'; btn.classList.add('copied');
+  setTimeout(() => { btn.textContent = 'Copy link'; btn.classList.remove('copied'); }, 2000);
 }
 
-// ────────────────────────────────────────────
-//  VIEWER
-// ────────────────────────────────────────────
+function dismissOverlay() {
+  document.getElementById('linkOverlay').classList.add('gone');
+  setupAutoHide();
+}
+
+// ── VIEWER ──
 function joinRoom() {
   let input = document.getElementById('roomInput').value.trim();
-  // Accept full URL or just the ID
-  if (input.includes('?room=')) {
-    input = new URL(input).searchParams.get('room');
-  }
+  if (input.includes('?room=')) { try { input = new URL(input).searchParams.get('room'); } catch(e){} }
   if (!input) { toast('Paste the link or room code first'); return; }
 
   role = 'viewer';
   go('liveView');
-  document.getElementById('connectingOverlay').classList.remove('gone');
-  document.getElementById('connectingText').textContent = 'Connecting to sharer…';
-  document.getElementById('statusText').textContent = 'Watching';
+  document.getElementById('linkOverlay').classList.add('gone');
+  document.getElementById('showLinkBtn').style.display = 'none';
   document.getElementById('viewerBadge').style.display = 'none';
   document.getElementById('muteBtn').style.display = 'none';
   document.getElementById('pauseBtn').style.display = 'none';
+  document.getElementById('connectingOverlay').classList.remove('gone');
+  document.getElementById('connectingText').textContent = 'Connecting to sharer…';
+  document.getElementById('statusText').textContent = 'Watching';
 
   peer = new Peer();
   peer.on('open', () => {
-    // Call the sharer using their peer ID
-    // We must send *something* as our stream — send an empty stream
     viewerConn = peer.call(input, new MediaStream());
-
-    viewerConn.on('stream', (remoteStream) => {
+    viewerConn.on('stream', (remote) => {
       document.getElementById('connectingOverlay').classList.add('gone');
       const v = document.getElementById('videoEl');
-      v.srcObject = remoteStream;
-      v.muted = false;
+      v.srcObject = remote; v.muted = false;
       v.onloadedmetadata = () => { document.getElementById('resLabel').textContent = v.videoWidth + ' × ' + v.videoHeight; };
       setupAutoHide();
       toast('Connected!');
     });
-
     viewerConn.on('close', () => { toast('Sharer ended the session'); setTimeout(hangUp, 1800); });
-    viewerConn.on('error', () => {
-      document.getElementById('connectingText').textContent = 'Could not connect — is the link correct?';
-      toast('Connection failed');
-    });
+    viewerConn.on('error', () => { document.getElementById('connectingText').textContent = 'Could not connect — is the code correct?'; toast('Connection failed'); });
   });
-
-  peer.on('error', (err) => {
-    document.getElementById('connectingText').textContent = 'Error: ' + err.type;
-    toast('Error: ' + err.type);
-  });
+  peer.on('error', (err) => { document.getElementById('connectingText').textContent = 'Error: ' + err.type; toast('Error: ' + err.type); });
 }
 
-// ────────────────────────────────────────────
-//  LIVE VIEW HELPER
-// ────────────────────────────────────────────
-function showLiveView(stream, r) {
-  go('liveView');
-  document.getElementById('connectingOverlay').classList.add('gone');
-  document.getElementById('statusText').textContent = r === 'sharer' ? 'Sharing screen' : 'Watching';
-  document.getElementById('viewerBadge').style.display = r === 'sharer' ? '' : 'none';
-  document.getElementById('muteBtn').style.display = r === 'sharer' ? '' : 'none';
-  document.getElementById('pauseBtn').style.display = r === 'sharer' ? '' : 'none';
-
-  if (stream) {
-    const v = document.getElementById('videoEl');
-    v.srcObject = stream;
-    v.muted = true;
-    v.onloadedmetadata = () => { document.getElementById('resLabel').textContent = v.videoWidth + ' × ' + v.videoHeight; };
-  }
-  setupAutoHide();
-}
-
-// ────────────────────────────────────────────
-//  HANG UP
-// ────────────────────────────────────────────
+// ── Hang up ──
 function hangUp() {
-  if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
-  if (viewerConn) { try { viewerConn.close(); } catch(e){} viewerConn = null; }
-  mediaConns.forEach(c => { try { c.close(); } catch(e){} }); mediaConns = [];
-  if (peer) { try { peer.destroy(); } catch(e){} peer = null; }
-
+  if (localStream) { localStream.getTracks().forEach(t=>t.stop()); localStream = null; }
+  if (viewerConn) { try{viewerConn.close();}catch(e){} viewerConn = null; }
+  mediaConns.forEach(c=>{try{c.close();}catch(e){}});  mediaConns = [];
+  if (peer) { try{peer.destroy();}catch(e){} peer = null; }
   document.getElementById('videoEl').srcObject = null;
   if (document.fullscreenElement) document.exitFullscreen();
   clearTimeout(hideTimer);
-
-  // reset state
-  viewerCount = 0; muted = false; paused = false; role = null;
+  role = null; muted = false; paused = false; viewerCount = 0;
   document.getElementById('resLabel').textContent = '— × —';
   document.getElementById('muteBtn').classList.remove('active');
   document.getElementById('pauseBtn').classList.remove('active');
   document.getElementById('pauseIcon').innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
-  document.getElementById('linkSection').style.display = 'none';
   document.getElementById('startBtn').disabled = false;
-  document.getElementById('startBtn').textContent = 'Start Sharing';
+  document.getElementById('startBtn').textContent = 'Start Sharing →';
   document.getElementById('roomInput').value = '';
-
+  document.getElementById('roomCodeDisplay').textContent = '——————';
+  document.getElementById('controls').classList.add('hidden');
+  document.getElementById('linkOverlay').classList.remove('gone');
   history.replaceState({}, '', location.pathname);
   go('idle');
 }
 
-// ────────────────────────────────────────────
-//  CONTROLS
-// ────────────────────────────────────────────
+// ── Controls ──
 function toggleMute() {
   if (!localStream) return;
   const at = localStream.getAudioTracks();
   if (!at.length) { toast('No audio captured'); return; }
-  muted = !muted;
-  at.forEach(t => t.enabled = !muted);
+  muted = !muted; at.forEach(t=>t.enabled=!muted);
   document.getElementById('muteBtn').classList.toggle('active', muted);
   toast(muted ? 'Audio muted' : 'Audio unmuted');
 }
-
 function togglePause() {
   if (!localStream) return;
-  paused = !paused;
-  localStream.getVideoTracks().forEach(t => t.enabled = !paused);
+  paused = !paused; localStream.getVideoTracks().forEach(t=>t.enabled=!paused);
   document.getElementById('pauseBtn').classList.toggle('active', paused);
-  document.getElementById('pauseIcon').innerHTML = paused
-    ? '<polygon points="5 3 19 12 5 21 5 3"/>'
-    : '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+  document.getElementById('pauseIcon').innerHTML = paused ? '<polygon points="5 3 19 12 5 21 5 3"/>' : '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
   document.getElementById('statusText').textContent = paused ? 'Paused' : 'Sharing screen';
   toast(paused ? 'Stream paused' : 'Stream resumed');
 }
-
 function toggleFullscreen() {
   if (!document.fullscreenElement) document.getElementById('liveView').requestFullscreen();
   else document.exitFullscreen();
 }
 document.addEventListener('fullscreenchange', () => {
-  const isFs = !!document.fullscreenElement;
-  document.getElementById('fsBtn').classList.toggle('active', isFs);
-  document.getElementById('fsIcon').innerHTML = isFs
+  const fs = !!document.fullscreenElement;
+  document.getElementById('fsBtn').classList.toggle('active', fs);
+  document.getElementById('fsIcon').innerHTML = fs
     ? '<path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>'
     : '<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>';
 });
-
 async function togglePip() {
   const v = document.getElementById('videoEl');
   try {
     if (document.pictureInPictureElement) await document.exitPictureInPicture();
     else { await v.requestPictureInPicture(); toast('PiP on'); }
-  } catch { toast('PiP not supported here'); }
+  } catch { toast('PiP not supported'); }
 }
 
-// ────────────────────────────────────────────
-//  AUTO-HIDE CONTROLS
-// ────────────────────────────────────────────
+// ── Auto-hide controls ──
 function setupAutoHide() {
   const lv = document.getElementById('liveView');
   lv.addEventListener('mousemove', showControls, { passive: true });
@@ -678,25 +610,20 @@ function showControls() {
   }, 3000);
 }
 
-// ────────────────────────────────────────────
-//  KEYBOARD SHORTCUTS
-// ────────────────────────────────────────────
+// ── Keyboard ──
 document.addEventListener('keydown', e => {
   if (e.target.tagName === 'INPUT') return;
   if (!document.getElementById('liveView').classList.contains('active')) return;
   if (e.key === 'f' || e.key === 'F') toggleFullscreen();
-  if (e.key === ' ') { e.preventDefault(); if (role === 'sharer') togglePause(); }
-  if (e.key === 'm' || e.key === 'M') { if (role === 'sharer') toggleMute(); }
+  if (e.key === ' ') { e.preventDefault(); if (role==='sharer') togglePause(); }
+  if (e.key === 'm' || e.key === 'M') { if (role==='sharer') toggleMute(); }
 });
 
-// ────────────────────────────────────────────
-//  TOAST
-// ────────────────────────────────────────────
+// ── Toast ──
 let toastTimer;
 function toast(msg) {
   const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
+  el.textContent = msg; el.classList.add('show');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
 }
